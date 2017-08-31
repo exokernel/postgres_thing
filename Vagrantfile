@@ -82,9 +82,9 @@ Vagrant.configure("2") do |config|
   # SHELL
 
   # Add your pubkey for direct login
-  if Pathname.new(PUBLIC_KEY_PATH).exist?
+  if File.exist?(PUBLIC_KEY_PATH)
     config.vm.provision :file, source: PUBLIC_KEY_PATH, destination: '/tmp/id_rsa.pub'
-    config.vm.provision :shell, :inline => "rm -f /root/.ssh/authorized_keys && mkdir -p /root/.ssh && sudo cp /tmp/id_rsa.pub /root/.ssh/authorized_keys"
+    config.vm.provision :shell, :inline => "rm -f /root/.ssh/authorized_keys && mkdir -p /root/.ssh && cp /tmp/id_rsa.pub /root/.ssh/authorized_keys"
   end
 
   config.vm.provision :shell, path: "bootstrap.sh"
