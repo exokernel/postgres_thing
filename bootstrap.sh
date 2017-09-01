@@ -26,13 +26,15 @@ apt-get install -y protobuf-c-compiler libprotobuf-c-dev
 
 # install and stop
 apt-get install -y postgresql
+postgres_ver=`psql --version | awk '{print $3}' | cut -d'.' -f1,2`
 systemctl stop postgresql
+sleep 5 # apparently it takes a bit to full shutdown, hacky but okay for now
 
-# move the initial postgres data area to the /data volume
-mv /var/lib/postgresql /data
+# lol, one fell swoop
+usermod -m -d /data/postgresql postgres
 
 # change data_directory in postgresql.conf
-sed -i "s~\(data_directory = \)'/var/lib~\1'\/data~" /etc/postgresql/9.6/main/postgresql.conf
+sed -i "s~\(data_directory = \)'/var/lib~\1'\/data~" /etc/postgresql/$postgres_ver/main/postgresql.conf
 
 # start
 systemctl start postgresql
