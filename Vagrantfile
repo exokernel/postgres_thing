@@ -62,8 +62,8 @@ Vagrant.configure("2") do |config|
       # resize disk
       # vb.customize ["modifyhd", "disk id", "--resize", "size in megabytes"]
       
-      # add second disk?
-      file_to_disk = './large_disk.vdi'
+      # add second disk
+      file_to_disk = './datadisk.vdi'
       unless File.exist?(file_to_disk)
         vb.customize ['createhd', '--filename', file_to_disk, '--size', 5 * 1024]
       end
