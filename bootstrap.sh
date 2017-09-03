@@ -36,5 +36,11 @@ usermod -m -d /data/postgresql postgres
 # change data_directory in postgresql.conf
 sed -i "s~\(data_directory = \)'/var/lib~\1'\/data~" /etc/postgresql/$postgres_ver/main/postgresql.conf
 
+# build cstore_fdw
+apt-get install -y git postgresql-server-dev-${postgres_ver} libdpkg-perl
+git clone https://github.com/citusdata/cstore_fdw.git
+cd cstore_fdw && PATH=/usr/local/pgsql/bin/:$PATH make && PATH=/usr/local/pgsql/bin/:$PATH make install
+echo "shared_preload_libraries = 'cstore_fdw'" >> /etc/postgresql/$postgres_ver/main/postgresql.conf
+
 # start
 systemctl start postgresql
