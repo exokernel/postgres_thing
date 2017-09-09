@@ -3,6 +3,9 @@
 
 PUBLIC_KEY_PATH = "#{Dir.home}/.ssh/id_rsa.pub"
 
+file_to_disk1 = 'masterdisk.vdi'
+file_to_disk2 = 'slavedisk.vdi'
+
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
 # configures the configuration version (we support older styles for
 # backwards compatibility). Please don't change it unless you know what
@@ -48,27 +51,6 @@ Vagrant.configure("2") do |config|
   # argument is a set of non-required options.
   # config.vm.synced_folder "../data", "/vagrant_data"
 
-  # Provider-specific configuration so you can fine-tune various
-  # backing providers for Vagrant. These expose provider-specific options.
-  # Example for VirtualBox:
-  #
-  config.vm.provider "virtualbox" do |vb|
-  #   # Display the VirtualBox GUI when booting the machine
-  #   vb.gui = true
-  #
-  #   # Customize the amount of memory on the VM:
-      vb.memory = "1024"
-
-      # resize disk
-      # vb.customize ["modifyhd", "disk id", "--resize", "size in megabytes"]
-      
-      # add second disk
-      file_to_disk = './datadisk.vdi'
-      unless File.exist?(file_to_disk)
-        vb.customize ['createhd', '--filename', file_to_disk, '--size', 5 * 1024]
-      end
-      vb.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', file_to_disk]
-  end
   #
   # View the documentation for the provider you are using for more
   # information on available options.
@@ -81,11 +63,69 @@ Vagrant.configure("2") do |config|
   #   apt-get install -y apache2
   # SHELL
 
-  # Add your pubkey for direct login
-  if File.exist?(PUBLIC_KEY_PATH)
-    config.vm.provision :file, source: PUBLIC_KEY_PATH, destination: '/tmp/id_rsa.pub'
-    config.vm.provision :shell, :inline => "rm -f /root/.ssh/authorized_keys && mkdir -p /root/.ssh && cp /tmp/id_rsa.pub /root/.ssh/authorized_keys"
+  config.vm.network "private_network", type: "dhcp"
+
+  config.vm.define "master" do |master|
+      master.vm.hostname = "master"
+      # Provider-specific configuration so you can fine-tune various
+      # backing providers for Vagrant. These expose provider-specific options.
+      # Example for VirtualBox:
+      #
+      master.vm.provider "virtualbox" do |vb|
+      #   # Display the VirtualBox GUI when booting the machine
+      #   vb.gui = true
+      #
+      #   # Customize the amount of memory on the VM:
+          vb.memory = "1024"
+    
+          # resize disk
+          # vb.customize ["modifyhd", "disk id", "--resize", "size in megabytes"]
+          
+          # add second disk
+          unless File.exist?(file_to_disk1)
+            vb.customize ['createhd', '--filename', file_to_disk1, '--size', 5 * 1024]
+            vb.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 1, '--type', 'hdd', '--medium', file_to_disk1]
+          end
+      end
+
+      # Add your pubkey for direct login
+      if File.exist?(PUBLIC_KEY_PATH)
+        master.vm.provision :file, source: PUBLIC_KEY_PATH, destination: '/tmp/id_rsa.pub'
+        master.vm.provision :shell, :inline => "rm -f /root/.ssh/authorized_keys && mkdir -p /root/.ssh && cp /tmp/id_rsa.pub /root/.ssh/authorized_keys"
+      end
+    
+      master.vm.provision :shell, path: "bootstrap.sh"
   end
 
-  config.vm.provision :shell, path: "bootstrap.sh"
+  config.vm.define "slave" do |slave|
+      # Provider-specific configuration so you can fine-tune various
+      # backing providers for Vagrant. These expose provider-specific options.
+      # Example for VirtualBox:
+      #
+      slave.vm.hostname = "slave"
+      slave.vm.provider "virtualbox" do |vb|
+      #   # Display the VirtualBox GUI when booting the machine
+      #   vb.gui = true
+      #
+      #   # Customize the amount of memory on the VM:
+          vb.memory = "1024"
+    
+          # resize disk
+          # vb.customize ["modifyhd", "disk id", "--resize", "size in megabytes"]
+          
+          # add second disk
+          unless File.exist?(file_to_disk2)
+            vb.customize ['createhd', '--filename', file_to_disk2, '--size', 5 * 1024]
+            vb.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 1, '--type', 'hdd', '--medium', file_to_disk2]
+          end
+      end
+
+      # Add your pubkey for direct login
+      if File.exist?(PUBLIC_KEY_PATH)
+        slave.vm.provision :file, source: PUBLIC_KEY_PATH, destination: '/tmp/id_rsa.pub'
+        slave.vm.provision :shell, :inline => "rm -f /root/.ssh/authorized_keys && mkdir -p /root/.ssh && cp /tmp/id_rsa.pub /root/.ssh/authorized_keys"
+      end
+    
+      slave.vm.provision :shell, path: "bootstrap-slave.sh"
+  end
 end
