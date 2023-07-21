@@ -94,7 +94,7 @@ Vagrant.configure("2") do |config|
         master.vm.provision :shell, :inline => "rm -f /root/.ssh/authorized_keys && mkdir -p /root/.ssh && cp /tmp/id_rsa.pub /root/.ssh/authorized_keys"
       end
     
-      master.vm.provision :shell, path: "bootstrap.sh"
+      master.vm.provision :shell, path: "bootstrap-master.sh"
   end
 
   config.vm.define "slave" do |slave|
